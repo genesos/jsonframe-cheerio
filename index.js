@@ -42,7 +42,10 @@ let filterData = function (data, filter) {
 	let paranthethisRegex = /(?:\()(.+)(?:\))/gim
 
 	let result = data
-	if (["raw"].includes(filter)) {
+
+	if (typeof filter === 'function') {
+		result = filter(result.replace(/\s+/gm, " ").trim());
+	} else if (["raw"].includes(filter)) {
 		// let the raw data
 
 	} else if (filter && filter.includes("split")) {
@@ -80,7 +83,7 @@ let filterData = function (data, filter) {
 		// let cssValue = paranthethisRegex.exec(filter)
 		// if(cssValue && cssValue[1]){
 		// 	result = result.split(cssValue[1].trim()).pop().split(",",1).shift().trim() || ""
-		// }	
+		// }
 	} else if (["trim"].includes(filter)) {
 		result = result.trim()
 	} else if (filter && filter.includes("join") && _.isArray(result)) {
@@ -376,11 +379,13 @@ module.exports = function ($) {
 		}
 
 		// avoid listing
-		if ((!g.filter || !g.filter.join("").includes("split")) && !multiple && result[0]) {
+		const isResultAsScalar = (!g.filter || typeof g.filter !== "string" || !g.filter.join("").includes("split"));
+		const isResultAsArray = g.filter && typeof g.filter === "string" && g.filter.join("").includes("join");
+		if (isResultAsScalar && !multiple && result[0]) {
 			result = result[0]
 		}
 
-		if (g.filter && g.filter.join("").includes("join") && result.length === 1) {
+		if (isResultAsArray && result.length === 1) {
 			result = result[0]
 		}
 
@@ -392,13 +397,13 @@ module.exports = function ($) {
 	}
 
 	let extractSmartSelector = function ({
-		selector,
-		node = null,
-		attribute = null,
-		filter = null,
-		extractor = null,
-		parser = null
-	}) {
+																				 selector,
+																				 node = null,
+																				 attribute = null,
+																				 filter = null,
+																				 extractor = null,
+																				 parser = null
+																			 }) {
 		let res = {
 			"selector": selector,
 			"attribute": attribute,
